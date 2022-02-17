@@ -1,9 +1,6 @@
 import socket
-import argparse
-import sys
 import json
-from urllib.parse import urlsplit, parse_qs
-
+from urllib.parse import urlsplit, parse_qs, urlparse
 
 # todo: parse the url from cmd, shove into the method to send request
 
@@ -22,7 +19,9 @@ def run_httpcClient():
 
     if (parsedLine[1] == "get"):
         httpc_get(parsedUrl, needVerbose)
+        
     if (parsedLine[1] == "post"):
+        
         httpc_post(parsedUrl, needVerbose)
 
 
@@ -32,19 +31,19 @@ def httpc_get(url, needVerbose):
     addr = socket.getaddrinfo(host, 80)[0][-1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(addr)
-    s.send(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
+    s.sendall(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
     display(s, needVerbose)
     s.close()
 
 
-def httpc_post(url, needVerbose):
-    print('sending post')
+def httpc_post(url, needVerbose): # httpc post -h Content-Type:application/json --d '{"Assignment": 1}' http://httpbin.org/post
+    print('sending post')           
     _, _, host, path = url.split('/', 3)
     addr = socket.getaddrinfo(host, 80)[0][-1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(addr)
-    # s.send(bytes('POST /%s HTTP/1.0\r\n Host: %s\r\nContent-Type: application/json\r\nContent-Length: 47\r\n\r\n{"capabilities": {}, "desiredCapabilities": {}}'  % (path, host), 'utf8'))
-    s.send(bytes('POST /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
+    post_req= "POST /"+path + " HTTP/1.0\r\n"+ "Host: "+host+ "\r\nContent-Type: application/json\r\nContent-Length: 17\r\n\r\n"+ json.dumps({"Assignment": 1}) + "\r\n"
+    s.sendall(bytes(post_req, 'utf8'))
     display(s, needVerbose)
     s.close()
 
@@ -71,4 +70,4 @@ run_httpcClient()
 # httpc_get('http://httpbin.org/get?course=networking&assignment=1')
 
 # to test POST request only ----> not functional atm!
-# httpc_post('http://httpbin.org/get?course=networking&assignment=1')
+#httpc_post('http://httpbin.org/get?course=networking&assignment=1')

@@ -23,6 +23,7 @@ def run_httpcClient():
         httpc_get(parsedUrl, needVerbose)
         
     if (parsedLine[1] == "post"):
+        
         if ((parsedLine[2] == "-v") and (parsedLine[3] == "-h") and (parsedLine[5] == "-d")): #works fine --> httpc post -v -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
             needVerbose = True
             needheader=True
@@ -31,8 +32,6 @@ def run_httpcClient():
             parsedData="".join(parsedLine[6])
             parsedUrl = "".join(map(str, parsedLine[7]))
             parsedstuff= parsedHeader+" "+parsedData +" "+parsedUrl
-            #print(parsedData)
-            #print(parsedUrl)
             print("this works!")
         
         elif((parsedLine[2] == "-h") and (parsedLine[4] == "-d")):# works atm--> httpc post -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
@@ -42,13 +41,17 @@ def run_httpcClient():
             parsedData="".join(parsedLine[5])
             parsedUrl = "".join(map(str, parsedLine[6]))
             parsedstuff= parsedHeader+" "+parsedData +" "+parsedUrl
-            print("with header plus data: YOLO!")
+            print("header plus data working!")
         
         elif (parsedLine[2] == "-v"): #causes bad request when input---> httpc post -v http://httpbin.org/post
+            print("need more parameters! just -v is not enough")
+            quit() 
             needVerbose = True
-            parsedstuff = "".join(map(str, parsedLine[3]))
+            parsedstuff = "".join(map(str, parsedLine[3])) #list goes out of bounds
             
-        elif (parsedLine[2] == "-h"): #works fine---> httpc post -h Content-Type:application/json http://httpbin.org/post
+        elif (parsedLine[2] == "-h"): #doesnt work anymore--> httpc post -h Content-Type:application/json http://httpbin.org/post
+            print("need more parameters! just -h is not enough") #list goes out of bounds
+            quit()  
             needheader=True
             parsedHeader="".join(map(str, parsedLine[3]))
             parsedUrl = "".join(map(str, parsedLine[4]))
@@ -56,7 +59,9 @@ def run_httpcClient():
             print("yoooo")
             
         else:
-            parsedstuff = "".join(map(str, parsedLine[2]))   
+            parsedstuff = "".join(map(str, parsedLine[2]))
+            print("need more parameters! try again!") #list goes out of bounds
+            quit()   
     httpc_post(parsedstuff, needVerbose, needheader, needData)
 
 

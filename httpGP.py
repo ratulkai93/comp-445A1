@@ -10,9 +10,10 @@ def run_httpcClient():
     parsedLine = line.split(" ")
 
     needVerbose = False
+    needheader= False
+    
     if (parsedLine[2] == "-v"):
-        parsedUrl = "".join(
-            map(str, parsedLine[3]))  # checks for verbose  and converts the following list item to string
+        parsedUrl = "".join(map(str, parsedLine[3]))  # checks for verbose  and converts the following list item to string
         needVerbose = True
     else:
         parsedUrl = "".join(map(str, parsedLine[2]))  # converts the list item to string
@@ -21,8 +22,28 @@ def run_httpcClient():
         httpc_get(parsedUrl, needVerbose)
         
     if (parsedLine[1] == "post"):
-        
-        httpc_post(parsedUrl, needVerbose)
+        if ((parsedLine[2] == "-v") and (parsedLine[3] == "-h")): #works fine --httpc post -h Content-Type:application/json http://httpbin.org/post
+            needVerbose = True
+            needheader=True
+            parsedHeader="".join(map(str, parsedLine[4]))
+            parsedUrl = "".join(map(str, parsedLine[5]))
+            parsedstuff= parsedHeader+" "+parsedUrl
+            print("this works!")
+            
+        elif (parsedLine[2] == "-v"): #causes bad request when input---> httpc post -v http://httpbin.org/post
+            needVerbose = True
+            parsedstuff = "".join(map(str, parsedLine[3]))
+            
+        elif (parsedLine[2] == "-h"): #works fine---> httpc post -h Content-Type:application/json http://httpbin.org/post
+            needheader=True
+            parsedHeader="".join(map(str, parsedLine[3]))
+            parsedUrl = "".join(map(str, parsedLine[4]))
+            parsedstuff= parsedHeader+" "+parsedUrl
+            print("yoooo")
+            
+        else:
+            parsedstuff = "".join(map(str, parsedLine[2]))   
+    httpc_post(parsedstuff, needVerbose, needheader)
 
 
 # parses and sends get request w/ provided url (has additional info for verbose)
@@ -36,13 +57,21 @@ def httpc_get(url, needVerbose):
     s.close()
 
 
-def httpc_post(url, needVerbose): # httpc post -h Content-Type:application/json --d '{"Assignment": 1}' http://httpbin.org/post
-    print('sending post')           
+def httpc_post(urlstuff, needVerbose, needHeader): # httpc post -h Content-Type:application/json --d '{"Assignment": 1}' http://httpbin.org/post
+    print('sending post')
+    if(needHeader):
+        parsedheaderstuff= urlstuff.split(" ")
+        parsedHeader= "".join(map(str, parsedheaderstuff[0]))
+        url="".join(map(str, parsedheaderstuff[1]))
+    else:
+        parsedHeader=" "
+        url= urlstuff  
+    print(urlstuff)         
     _, _, host, path = url.split('/', 3)
     addr = socket.getaddrinfo(host, 80)[0][-1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(addr)
-    post_req= "POST /"+path + " HTTP/1.0\r\n"+ "Host: "+host+ "\r\nContent-Type: application/json\r\nContent-Length: 17\r\n\r\n"+ json.dumps({"Assignment": 1}) + "\r\n"
+    post_req= "POST /"+path + " HTTP/1.0\r\n"+ "Host: "+host+ "\r\n"+parsedHeader+"\r\nContent-Length: 17\r\n\r\n"+ json.dumps({"Assignment": 1}) + "\r\n"
     s.sendall(bytes(post_req, 'utf8'))
     display(s, needVerbose)
     s.close()

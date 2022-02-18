@@ -11,6 +11,7 @@ def run_httpcClient():
 
     needVerbose = False
     needheader= False
+    needData= False
     
     if (parsedLine[2] == "-v"):
         parsedUrl = "".join(map(str, parsedLine[3]))  # checks for verbose  and converts the following list item to string
@@ -22,14 +23,27 @@ def run_httpcClient():
         httpc_get(parsedUrl, needVerbose)
         
     if (parsedLine[1] == "post"):
-        if ((parsedLine[2] == "-v") and (parsedLine[3] == "-h")): #works fine --httpc post -h Content-Type:application/json http://httpbin.org/post
+        if ((parsedLine[2] == "-v") and (parsedLine[3] == "-h") and (parsedLine[5] == "-d")): #works fine --> httpc post -v -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
             needVerbose = True
             needheader=True
+            needData=True
             parsedHeader="".join(map(str, parsedLine[4]))
-            parsedUrl = "".join(map(str, parsedLine[5]))
-            parsedstuff= parsedHeader+" "+parsedUrl
+            parsedData="".join(parsedLine[6])
+            parsedUrl = "".join(map(str, parsedLine[7]))
+            parsedstuff= parsedHeader+" "+parsedData +" "+parsedUrl
+            #print(parsedData)
+            #print(parsedUrl)
             print("this works!")
-            
+        
+        elif((parsedLine[2] == "-h") and (parsedLine[4] == "-d")):# works atm--> httpc post -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
+            needheader=True
+            needData=True
+            parsedHeader="".join(map(str, parsedLine[3]))
+            parsedData="".join(parsedLine[5])
+            parsedUrl = "".join(map(str, parsedLine[6]))
+            parsedstuff= parsedHeader+" "+parsedData +" "+parsedUrl
+            print("with header plus data: YOLO!")
+        
         elif (parsedLine[2] == "-v"): #causes bad request when input---> httpc post -v http://httpbin.org/post
             needVerbose = True
             parsedstuff = "".join(map(str, parsedLine[3]))
@@ -43,7 +57,7 @@ def run_httpcClient():
             
         else:
             parsedstuff = "".join(map(str, parsedLine[2]))   
-    httpc_post(parsedstuff, needVerbose, needheader)
+    httpc_post(parsedstuff, needVerbose, needheader, needData)
 
 
 # parses and sends get request w/ provided url (has additional info for verbose)
@@ -57,21 +71,24 @@ def httpc_get(url, needVerbose):
     s.close()
 
 
-def httpc_post(urlstuff, needVerbose, needHeader): # httpc post -h Content-Type:application/json --d '{"Assignment": 1}' http://httpbin.org/post
+def httpc_post(urlstuff, needVerbose, needHeader, needData): # httpc post -h Content-Type:application/json --d '{"Assignment": 1}' http://httpbin.org/post
     print('sending post')
-    if(needHeader):
+    if(needHeader and needData):
         parsedheaderstuff= urlstuff.split(" ")
         parsedHeader= "".join(map(str, parsedheaderstuff[0]))
-        url="".join(map(str, parsedheaderstuff[1]))
+        parsedData="".join(map(str, parsedheaderstuff[1]))
+        url="".join(map(str, parsedheaderstuff[2]))
+        #print(parsedData)
     else:
         parsedHeader=" "
+        parsedData=" "
         url= urlstuff  
     print(urlstuff)         
     _, _, host, path = url.split('/', 3)
     addr = socket.getaddrinfo(host, 80)[0][-1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(addr)
-    post_req= "POST /"+path + " HTTP/1.0\r\n"+ "Host: "+host+ "\r\n"+parsedHeader+"\r\nContent-Length: 17\r\n\r\n"+ json.dumps({"Assignment": 1}) + "\r\n"
+    post_req= "POST /"+path + " HTTP/1.0\r\n"+ "Host: "+host+ "\r\n"+parsedHeader+"\r\nContent-Length: 17\r\n\r\n"+ parsedData + "\r\n"
     s.sendall(bytes(post_req, 'utf8'))
     display(s, needVerbose)
     s.close()

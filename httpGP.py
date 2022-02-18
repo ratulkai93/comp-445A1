@@ -2,67 +2,96 @@ import socket
 import json
 from urllib.parse import urlsplit, parse_qs, urlparse
 
+
 # todo: parse the url from cmd, shove into the method to send request
 
 def run_httpcClient():
-
     line = input('type your request: ')
     parsedLine = line.split(" ")
 
     needVerbose = False
-    needheader= False
-    needData= False
-    
+    needHeader = False
+    needData = False
+
     if (parsedLine[2] == "-v"):
-        parsedUrl = "".join(map(str, parsedLine[3]))  # checks for verbose  and converts the following list item to string
+        parsedUrl = "".join(
+            map(str, parsedLine[3]))  # checks for verbose  and converts the following list item to string
         needVerbose = True
     else:
         parsedUrl = "".join(map(str, parsedLine[2]))  # converts the list item to string
 
     if (parsedLine[1] == "get"):
         httpc_get(parsedUrl, needVerbose)
-        
+
     if (parsedLine[1] == "post"):
-        
-        if ((parsedLine[2] == "-v") and (parsedLine[3] == "-h") and (parsedLine[5] == "-d")): #works fine --> httpc post -v -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
+
+        if ((parsedLine[2] == "-v") and (parsedLine[3] == "-h") and (parsedLine[5] == "-d")):  # works fine --> httpc post -v -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
             needVerbose = True
-            needheader=True
-            needData=True
-            parsedHeader="".join(map(str, parsedLine[4]))
-            parsedData="".join(parsedLine[6])
+            needHeader = True
+            needData = True
+            parsedHeader = "".join(map(str, parsedLine[4]))
+            parsedData = "".join(parsedLine[6])
             parsedUrl = "".join(map(str, parsedLine[7]))
-            parsedstuff= parsedHeader+" "+parsedData +" "+parsedUrl
+            parsedStuff = parsedHeader + " " + parsedData + " " + parsedUrl
             print("this works!")
-        
-        elif((parsedLine[2] == "-h") and (parsedLine[4] == "-d")):# works atm--> httpc post -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
-            needheader=True
-            needData=True
-            parsedHeader="".join(map(str, parsedLine[3]))
-            parsedData="".join(parsedLine[5])
+
+        elif ((parsedLine[2] == "-h") and (parsedLine[4] == "-d")):  # works atm--> httpc post -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
+            needHeader = True
+            needData = True
+            parsedHeader = "".join(map(str, parsedLine[3]))
+            parsedData = "".join(parsedLine[5])
             parsedUrl = "".join(map(str, parsedLine[6]))
-            parsedstuff= parsedHeader+" "+parsedData +" "+parsedUrl
+            parsedStuff = parsedHeader + " " + parsedData + " " + parsedUrl
             print("header plus data working!")
-        
-        elif (parsedLine[2] == "-v"): #causes bad request when input---> httpc post -v http://httpbin.org/post
-            print("need more parameters! just -v is not enough")
-            quit() 
+
+        elif ((parsedLine[2] == "-v") and (parsedLine[3] == "-h") and (parsedLine[5] == "-f")):  # works fine --> httpc post -v -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
             needVerbose = True
-            parsedstuff = "".join(map(str, parsedLine[3])) #list goes out of bounds
-            
-        elif (parsedLine[2] == "-h"): #doesnt work anymore--> httpc post -h Content-Type:application/json http://httpbin.org/post
-            print("need more parameters! just -h is not enough") #list goes out of bounds
-            quit()  
-            needheader=True
-            parsedHeader="".join(map(str, parsedLine[3]))
+            needHeader = True
+            needData = True
+            parsedHeader = "".join(map(str, parsedLine[4]))
+            parsedData = "".join(parsedLine[6])
+            parsedUrl = "".join(map(str, parsedLine[7]))
+            parsedStuff = parsedHeader + " " + parsedData + " " + parsedUrl
+            print("this works!")
+
+        elif ((parsedLine[2] == "-h") and (parsedLine[4] == "-f")):
+            needHeader = True
+            needData = True
+            parsedHeader = "".join(map(str, parsedLine[3]))
+            parsedFileName = "".join(parsedLine[5])
+            try:
+                print(parsedFileName)
+                with open(parsedFileName, 'r') as f:
+                    parsedData = f.read()
+                print(parsedData)
+            except IOError:
+                print("File is not found.")
+            else:
+                print("File is successfully read.")
+            parsedUrl = "".join(map(str, parsedLine[6]))
+            parsedStuff = parsedHeader + " " + parsedData + " " + parsedUrl
+            print("header plus file working!")
+
+        elif (parsedLine[2] == "-v"):  # causes bad request when input---> httpc post -v http://httpbin.org/post
+            print("need more parameters! just -v is not enough")
+            quit()
+            needVerbose = True
+            parsedStuff = "".join(map(str, parsedLine[3]))  # list goes out of bounds
+
+        elif (parsedLine[2] == "-h"):  # doesnt work anymore--> httpc post -h Content-Type:application/json http://httpbin.org/post
+            print("need more parameters! just -h is not enough")  # list goes out of bounds
+            quit()
+            needHeader = True
+            parsedHeader = "".join(map(str, parsedLine[3]))
             parsedUrl = "".join(map(str, parsedLine[4]))
-            parsedstuff= parsedHeader+" "+parsedUrl
+            parsedStuff = parsedHeader + " " + parsedUrl
             print("yoooo")
-            
+
         else:
-            parsedstuff = "".join(map(str, parsedLine[2]))
-            print("need more parameters! try again!") #list goes out of bounds
-            quit()   
-    httpc_post(parsedstuff, needVerbose, needheader, needData)
+            parsedStuff = "".join(map(str, parsedLine[2]))
+            print("need more parameters! try again!")  # list goes out of bounds
+            quit()
+    httpc_post(parsedStuff, needVerbose, needHeader, needData)
 
 
 # parses and sends get request w/ provided url (has additional info for verbose)
@@ -75,25 +104,25 @@ def httpc_get(url, needVerbose):
     display(s, needVerbose)
     s.close()
 
-
-def httpc_post(urlstuff, needVerbose, needHeader, needData): # httpc post -h Content-Type:application/json --d '{"Assignment": 1}' http://httpbin.org/post
+# httpc post -h Content-Type:application/json --d '{"Assignment": 1}' http://httpbin.org/post
+def httpc_post(urlstuff, needVerbose, needHeader, needData):
     print('sending post')
-    if(needHeader and needData):
-        parsedheaderstuff= urlstuff.split(" ")
-        parsedHeader= "".join(map(str, parsedheaderstuff[0]))
-        parsedData="".join(map(str, parsedheaderstuff[1]))
-        url="".join(map(str, parsedheaderstuff[2]))
-        #print(parsedData)
+    if (needHeader and needData):
+        parsedHeaderStuff = urlstuff.split(" ")
+        parsedHeader = "".join(map(str, parsedHeaderStuff[0]))
+        parsedData = "".join(map(str, parsedHeaderStuff[1]))
+        url = "".join(map(str, parsedHeaderStuff[2]))
+        # print(parsedData)
     else:
-        parsedHeader=" "
-        parsedData=" "
-        url= urlstuff  
-    print(urlstuff)         
+        parsedHeader = " "
+        parsedData = " "
+        url = urlstuff
+    print(urlstuff)
     _, _, host, path = url.split('/', 3)
     addr = socket.getaddrinfo(host, 80)[0][-1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(addr)
-    post_req= "POST /"+path + " HTTP/1.0\r\n"+ "Host: "+host+ "\r\n"+parsedHeader+"\r\nContent-Length: 17\r\n\r\n"+ parsedData + "\r\n"
+    post_req = "POST /" + path + " HTTP/1.0\r\n" + "Host: " + host + "\r\n" + parsedHeader + "\r\nContent-Length: 17\r\n\r\n" + parsedData + "\r\n"
     s.sendall(bytes(post_req, 'utf8'))
     display(s, needVerbose)
     s.close()
@@ -121,4 +150,4 @@ run_httpcClient()
 # httpc_get('http://httpbin.org/get?course=networking&assignment=1')
 
 # to test POST request only ----> not functional atm!
-#httpc_post('http://httpbin.org/get?course=networking&assignment=1')
+# httpc_post('http://httpbin.org/get?course=networking&assignment=1')

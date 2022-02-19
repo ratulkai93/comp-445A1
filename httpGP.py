@@ -3,6 +3,8 @@ import json
 import sys
 from urllib.parse import urlsplit, parse_qs, urlparse
 
+from numpy import byte
+
 # todo: httpc_get needs to be able to return header
 
 def run_httpcClient():
@@ -10,7 +12,6 @@ def run_httpcClient():
     if line == "quit":
         sys.exit(0)
     parsedLine = line.split(" ")
-
 
     needVerbose = False
     needHeader = False
@@ -22,26 +23,27 @@ def run_httpcClient():
         # httpc get -v URL
         if parsedLine[2] == "-v":
             needVerbose = True
-            parsedUrl = "".join(map(str, parsedLine[3]))
+            parsedStuff = "".join(map(str, parsedLine[3]))
 
         # httpc get -h "k:v" URL
         elif parsedLine[2] == "-h":
             needHeader = True
             parsedHeader = "".join(map(str, parsedLine[3]))
             parsedUrl = "".join(map(str, parsedLine[4]))
+            parsedStuff = parsedHeader + " " + parsedUrl
 
         # httpc get -v -h "k:v" URL
         elif (parsedLine[2] == "-v") and (parsedLine[3] == "-h"):
             needVerbose = True
             needHeader = True
             parsedHeader = "".join(map(str, parsedLine[4]))
-            parsedUrl = "".join(map(str, parsedLine[5]))
+            parsedStuff = "".join(map(str, parsedLine[5]))
 
         # httpc get URL
         else:
-            parsedUrl = "".join(map(str, parsedLine[2]))
+            parsedStuff = "".join(map(str, parsedLine[2]))
 
-        httpc_get(parsedUrl, needVerbose, needHeader)
+        httpc_get(parsedStuff, needVerbose, needHeader)
         # httpc_get(parsedUrl, needVerbose)
 
     # POST
@@ -138,11 +140,13 @@ def run_httpcClient():
 
 # todo: httpc_get needs to be able to return header
 # parses and sends get request w/ provided url (has additional info for verbose)
+
 def httpc_get(urlstuff, needVerbose, needHeader):
     if needHeader:
         parsedHeaderStuff = urlstuff.split(" ")
         parsedHeader = "".join(map(str, parsedHeaderStuff[0]))
         url = "".join(map(str, parsedHeaderStuff[1]))
+        #print(url)
     else:
         parsedHeader = " "
         url = urlstuff
@@ -150,11 +154,13 @@ def httpc_get(urlstuff, needVerbose, needHeader):
     addr = socket.getaddrinfo(host, 80)[0][-1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(addr)
-    # s.sendall(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
-    concatenated_url_string = "GET " + url.path + "?" + url.query.replace("%26", "&") + " HTTP/1.1\r\nHost: " \
-                              + url.netloc + "\r\n" + parsedHeader + "\r\n\r\n"
-    request = concatenated_url_string.encode()
-    s.send(request)
+    #s.sendall(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
+    get_req="GET /"+path+" HTTP/1.0\r\n"+ parsedHeader +"\r\nHost: "+host+"\r\n\r\n"
+    s.sendall(bytes(get_req,'utf-8'))
+    # concatenated_url_string = "GET " + path + "?" + url.query.replace("%26", "&") + " HTTP/1.1\r\nHost: " \
+    #                           + url.netloc + "\r\n" + parsedHeader + "\r\n\r\n"
+    # request = concatenated_url_string.encode()
+    #s.send(request)
     display(s, needVerbose)
     s.close()
 

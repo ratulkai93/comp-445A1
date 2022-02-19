@@ -22,7 +22,7 @@ def run_httpcClient():
         print("getting: ", end="")
 
         # httpc get -v URL
-        if parsedLine[2] == "-v":
+        if (parsedLine[2] == "-v") and (parsedLine[3] != "-h"):
             needVerbose = True
             parsedStuff = "".join(map(str, parsedLine[3]))
             print("v")
@@ -40,7 +40,8 @@ def run_httpcClient():
             needVerbose = True
             needHeader = True
             parsedHeader = "".join(map(str, parsedLine[4]))
-            parsedStuff = "".join(map(str, parsedLine[5]))
+            parsedUrl = "".join(map(str, parsedLine[5]))
+            parsedStuff = parsedHeader + " " + parsedUrl
             print("v h")
 
         # httpc get URL
@@ -93,6 +94,7 @@ def run_httpcClient():
                 print(parsedData)
             except IOError:
                 print("File is not found.")
+                quit()
             else:
                 print("File is successfully read.")
             parsedUrl = "".join(map(str, parsedLine[7]))
@@ -107,12 +109,13 @@ def run_httpcClient():
             parsedHeader = "".join(map(str, parsedLine[3]))
             parsedFileName = "".join(parsedLine[5])
             try:
-                print(parsedFileName)
+                print("loading " + parsedFileName)
                 with open(parsedFileName, 'r') as f:
                     parsedData = f.read()
                 print(parsedData)
             except IOError:
                 print("File is not found.")
+                quit()
             else:
                 print("File is successfully read.")
             parsedUrl = "".join(map(str, parsedLine[6]))
@@ -155,6 +158,8 @@ def run_httpcClient():
 def httpc_get(urlstuff, needVerbose, needHeader):
     if needHeader:
         parsedHeaderStuff = urlstuff.split(" ")
+        print(urlstuff)
+        print(parsedHeaderStuff)
         parsedHeader = "".join(map(str, parsedHeaderStuff[0]))
         url = "".join(map(str, parsedHeaderStuff[1]))
         #print(url)
@@ -168,10 +173,6 @@ def httpc_get(urlstuff, needVerbose, needHeader):
     #s.sendall(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
     get_req="GET /"+path+" HTTP/1.0\r\n"+ parsedHeader +"\r\nHost: "+host+"\r\n\r\n"
     s.sendall(bytes(get_req,'utf-8'))
-    # concatenated_url_string = "GET " + path + "?" + url.query.replace("%26", "&") + " HTTP/1.1\r\nHost: " \
-    #                           + url.netloc + "\r\n" + parsedHeader + "\r\n\r\n"
-    # request = concatenated_url_string.encode()
-    #s.send(request)
     display(s, needVerbose)
     s.close()
 
@@ -212,10 +213,10 @@ def display(s, needVerbose):
     else:
         print(strRecv.split("\r\n\r", 1)[1])  # Print w/o verbose info
 
+
 while True:
     run_httpcClient()
     print("----------------request ends----------------")
-
 
 
 
@@ -227,3 +228,21 @@ while True:
 
 # to test POST request only ----> not functional atm!
 # httpc_post('http://httpbin.org/get?course=networking&assignment=1')
+
+"""
+Test cases:
+GET:
+    httpc get http://httpbin.org/get?course=networking&assignment=1
+    httpc get -v http://httpbin.org/get?course=networking&assignment=1
+    httpc get -h Content-Type:text/html http://httpbin.org/get?course=networking&assignment=1
+    httpc get -v -h Content-Type:text/html http://httpbin.org/get?course=networking&assignment=1
+POST:
+    httpc post -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
+    httpc post -h Content-Type:application/json -f valid.txt http://httpbin.org/post
+    httpc post -v -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
+    httpc post -v -h Content-Type:application/json -f valid.txt http://httpbin.org/post
+    
+    httpc post -h http://httpbin.org/post
+    httpc post -v http://httpbin.org/post
+    httpc post -h Content-Type:application/json -f non-valid.txt http://httpbin.org/post
+"""

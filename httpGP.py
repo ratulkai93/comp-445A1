@@ -212,8 +212,9 @@ def display(s, needVerbose):
     else:
         print(strRecv.split("\r\n\r", 1)[1])  # Print w/o verbose info
 
-run_httpcClient()
-# while True:
+while True:
+    run_httpcClient()
+    print("----------------request ends----------------")
 
 
 

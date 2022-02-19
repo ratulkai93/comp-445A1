@@ -19,11 +19,13 @@ def run_httpcClient():
 
     # GET
     if parsedLine[1] == "get":
+        print("getting: ", end="")
 
         # httpc get -v URL
         if parsedLine[2] == "-v":
             needVerbose = True
             parsedStuff = "".join(map(str, parsedLine[3]))
+            print("v")
 
         # httpc get -h "k:v" URL
         elif parsedLine[2] == "-h":
@@ -31,6 +33,7 @@ def run_httpcClient():
             parsedHeader = "".join(map(str, parsedLine[3]))
             parsedUrl = "".join(map(str, parsedLine[4]))
             parsedStuff = parsedHeader + " " + parsedUrl
+            print("h")
 
         # httpc get -v -h "k:v" URL
         elif (parsedLine[2] == "-v") and (parsedLine[3] == "-h"):
@@ -38,19 +41,23 @@ def run_httpcClient():
             needHeader = True
             parsedHeader = "".join(map(str, parsedLine[4]))
             parsedStuff = "".join(map(str, parsedLine[5]))
+            print("v h")
 
         # httpc get URL
         else:
             parsedStuff = "".join(map(str, parsedLine[2]))
+            print("null")
 
         httpc_get(parsedStuff, needVerbose, needHeader)
         # httpc_get(parsedUrl, needVerbose)
 
     # POST
     if parsedLine[1] == "post":
+        print("posting: ", end="")
 
         # httpc post -v -h "k:v" -d inline-data URL
         if (parsedLine[2] == "-v") and (parsedLine[3] == "-h") and (parsedLine[5] == "-d"):  # works fine --> httpc post -v -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
+            print("v h d")
             needVerbose = True
             needHeader = True
             needData = True
@@ -58,20 +65,22 @@ def run_httpcClient():
             parsedData = "".join(parsedLine[6])
             parsedUrl = "".join(map(str, parsedLine[7]))
             parsedStuff = parsedHeader + " " + parsedData + " " + parsedUrl
-            print("Header plus data with verbose info is working!")
+            print("v h d successes")
 
         # httpc post -h "k:v" -d inline-data URL
         elif (parsedLine[2] == "-h") and (parsedLine[4] == "-d"):  # works atm--> httpc post -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
+            print("h d")
             needHeader = True
             needData = True
             parsedHeader = "".join(map(str, parsedLine[3]))
             parsedData = "".join(parsedLine[5])
             parsedUrl = "".join(map(str, parsedLine[6]))
             parsedStuff = parsedHeader + " " + parsedData + " " + parsedUrl
-            print("Header plus data working!")
+            print("h d successes")
 
         # httpc post -v -h"k:v" -f file URL
         elif (parsedLine[2] == "-v") and (parsedLine[3] == "-h") and (parsedLine[5] == "-f"):  # works fine --> httpc post -v -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
+            print("v h f")
             needVerbose = True
             needHeader = True
             needData = True
@@ -88,10 +97,11 @@ def run_httpcClient():
                 print("File is successfully read.")
             parsedUrl = "".join(map(str, parsedLine[7]))
             parsedStuff = parsedHeader + " " + parsedData + " " + parsedUrl
-            print("Header plus file data with verbose info is working!")
+            print("v h f successes")
 
         # httpc post -h"k:v" -f file URL
         elif (parsedLine[2] == "-h") and (parsedLine[4] == "-f"):
+            print("h f")
             needHeader = True
             needData = True
             parsedHeader = "".join(map(str, parsedLine[3]))
@@ -107,7 +117,7 @@ def run_httpcClient():
                 print("File is successfully read.")
             parsedUrl = "".join(map(str, parsedLine[6]))
             parsedStuff = parsedHeader + " " + parsedData + " " + parsedUrl
-            print("Header plus file data is working!")
+            print("h f successes")
 
         # httpc post -v URL
         elif parsedLine[2] == "-v":  # causes bad request when input---> httpc post -v http://httpbin.org/post
@@ -129,14 +139,15 @@ def run_httpcClient():
         # -d and -f cannot be used at the same time
         elif ("-d" in parsedLine) and ("-f" in parsedLine):
             print("-d and -f cannot be used at the same time, program is quiting...")
-            sys.exit()
+            quit()
 
         # httpc post URL
         else:
             parsedStuff = "".join(map(str, parsedLine[2]))
             print("Need more parameters! Try again!")  # list goes out of bounds
             quit()
-    httpc_post(parsedStuff, needVerbose, needHeader, needData)
+        httpc_post(parsedStuff, needVerbose, needHeader, needData)
+
 
 # todo: httpc_get needs to be able to return header
 # parses and sends get request w/ provided url (has additional info for verbose)
@@ -201,9 +212,9 @@ def display(s, needVerbose):
     else:
         print(strRecv.split("\r\n\r", 1)[1])  # Print w/o verbose info
 
+run_httpcClient()
+# while True:
 
-while True:
-    run_httpcClient()
 
 
 

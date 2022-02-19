@@ -41,7 +41,8 @@ def run_httpcClient():
         else:
             parsedUrl = "".join(map(str, parsedLine[2]))
 
-        httpc_get(parsedUrl, needVerbose)
+        httpc_get(parsedUrl, needVerbose, needHeader)
+        # httpc_get(parsedUrl, needVerbose)
 
     # POST
     if parsedLine[1] == "post":
@@ -149,7 +150,11 @@ def httpc_get(urlstuff, needVerbose, needHeader):
     addr = socket.getaddrinfo(host, 80)[0][-1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(addr)
-    s.sendall(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
+    # s.sendall(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
+    concatenated_url_string = "GET " + url.path + "?" + url.query.replace("%26", "&") + " HTTP/1.1\r\nHost: " \
+                              + url.netloc + "\r\n" + parsedHeader + "\r\n\r\n"
+    request = concatenated_url_string.encode()
+    s.send(request)
     display(s, needVerbose)
     s.close()
 
@@ -171,7 +176,7 @@ def httpc_post(urlstuff, needVerbose, needHeader, needData):
     addr = socket.getaddrinfo(host, 80)[0][-1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(addr)
-    post_req = "POST /" + path + " HTTP/1.0\r\n" + "Host: " + host + "\r\n" + parsedHeader + "\r\nContent-Length: 17\r\n\r\n" + parsedData + "\r\n"
+    post_req = "POST /" + path + " HTTP/1.0\r\nHost: " + host + "\r\n" + parsedHeader + "\r\nContent-Length: 17\r\n\r\n" + parsedData + "\r\n"
     s.sendall(bytes(post_req, 'utf8'))
     display(s, needVerbose)
     s.close()

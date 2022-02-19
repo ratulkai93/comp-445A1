@@ -16,7 +16,26 @@ def run_httpcClient():
     needVerbose = False
     needHeader = False
     needData = False
-
+        
+    if(parsedLine[1]=="help")and(parsedLine[2]=="get"):
+        print('\nusage: httpc get [-v] [-h key:value] URL\n\nGet executes a HTTP GET request for a given URL.\n\t-v' \
+             '\t\tPrints the detail of the response such as protocol, status, and headers.\n\t-h key:value\t' \
+             'Associates headers to HTTP Request with the format "key:value".\n')
+        
+    if(parsedLine[1]=="help")and(parsedLine[2]=="post"):
+        print('\nusage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL\n\nPost executes a HTTP ' \
+             'POST request for a given URL with inline data or from file.\n\t-v\t\tPrints the detail of the ' \
+             'response such as protocol, status, and headers.\n\t-h key:value\tAssociates headers to HTTP Request ' \
+             'with the format "key:value".\n\t-d string\tAssociates an inline data to the body HTTP POST request.' \
+             '\n\t-f file\t\tAssociates the content of a file to the body HTTP POST request.\n\nEither [-d] or [-f] ' \
+             'can be used but not both.')
+        
+    if(parsedLine[1]=="help"):
+        print('\nhttpc is a curl-like application but supports HTTP protocol only.\nUsage:\n\thttpc.py command ' \
+             '[arguments]\nThe commands are:\n\tget\texecutes a HTTP GET request and prints the response.\n\tpost\t' \
+             'executes a HTTP POST request and prints the response.\n\thelp\tprints this screen.\n\n' \
+             'Use "httpc help [command]" for more information about a command.\n')
+        
     # GET
     if parsedLine[1] == "get":
         print("getting: ", end="")
@@ -162,7 +181,6 @@ def httpc_get(urlstuff, needVerbose, needHeader):
         print(parsedHeaderStuff)
         parsedHeader = "".join(map(str, parsedHeaderStuff[0]))
         url = "".join(map(str, parsedHeaderStuff[1]))
-        #print(url)
     else:
         parsedHeader = " "
         url = urlstuff
@@ -170,7 +188,6 @@ def httpc_get(urlstuff, needVerbose, needHeader):
     addr = socket.getaddrinfo(host, 80)[0][-1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(addr)
-    #s.sendall(bytes('GET /%s HTTP/1.0\r\nHost: %s\r\n\r\n' % (path, host), 'utf8'))
     get_req="GET /"+path+" HTTP/1.0\r\n"+ parsedHeader +"\r\nHost: "+host+"\r\n\r\n"
     s.sendall(bytes(get_req,'utf-8'))
     display(s, needVerbose)
@@ -184,7 +201,6 @@ def httpc_post(urlstuff, needVerbose, needHeader, needData):
         parsedHeader = "".join(map(str, parsedHeaderStuff[0]))
         parsedData = "".join(map(str, parsedHeaderStuff[1]))
         url = "".join(map(str, parsedHeaderStuff[2]))
-        # print(parsedData)
     else:
         parsedHeader = " "
         parsedData = " "

@@ -250,6 +250,21 @@ def display(s, needVerbose):
     else:
         print(strRecv.split("\r\n\r", 1)[1])  # Print w/o verbose info
 
+        
+# to read and print a file
+def read(file_dir):
+    f = open(file_dir, 'r', encoding="utf-8")
+    print(f.read)
+
+
+# to write new content to a file, a new file will be created if not exist
+def write(file_dir, new_content):
+    f = open(file_dir, 'a+', encoding="utf-8")
+    f.write(new_content)
+    f = open(file_dir, 'a+', encoding="utf-8")
+    print(f.read)
+    
+    
 # todo:
 # def get_list():
 # def get_foo():

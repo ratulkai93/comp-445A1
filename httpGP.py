@@ -253,16 +253,21 @@ def display(s, needVerbose):
         
 # to read and print a file
 def read(file_dir):
-    f = open(file_dir, 'r', encoding="utf-8")
-    print(f.read)
+    try:
+        f = open(file_dir, 'r', encoding="utf-8")
+        print(f.read)
+    except IOError:
+        print("HTTP ERROR 404: File not found.")
+    f.close()
 
 
-# to write new content to a file, a new file will be created if not exist
+# to write new content to a file, a new file will be created at the dir if not exists
 def write(file_dir, new_content):
     f = open(file_dir, 'a+', encoding="utf-8")
     f.write(new_content)
     f = open(file_dir, 'a+', encoding="utf-8")
     print(f.read)
+    f.close()
     
     
 # todo:

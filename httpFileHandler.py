@@ -22,7 +22,7 @@ class FileHandler:
         self.stat=200
         self.content=FileHandler.generate_file_content(contType,fList)
     
-    def content_GET(self, url_dir, fName):
+    def content_GET(self, url_dir, fName, contentType):
         #wrong case 1
         if fName.find('../') != -1:
             out= {}

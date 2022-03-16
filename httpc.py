@@ -3,6 +3,7 @@ import sys
 from urllib.parse import urlparse
 import httpcHelper
 import re
+from httpFS import FileServer
 
 
 def run_httpc(userInput):

@@ -1,11 +1,7 @@
-from audioop import add
-from os import stat
 import socket
 import threading
 import re
 import json
-
-from matplotlib.font_manager import json_dump
 from httpFileHandler import FileHandler
 
 class FileServer:

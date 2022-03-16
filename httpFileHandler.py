@@ -1,4 +1,3 @@
-from locale import LC_MESSAGES
 import os
 import json
 import threading

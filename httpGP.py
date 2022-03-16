@@ -1,3 +1,6 @@
+# By Rahimuz Zaman, 27771789
+# By Mingyang Chen, 40026335
+
 import socket
 import json
 import sys
@@ -35,7 +38,8 @@ def run_httpcClient():
              '[arguments]\nThe commands are:\n\tget\texecutes a HTTP GET request and prints the response.\n\tpost\t' \
              'executes a HTTP POST request and prints the response.\n\thelp\tprints this screen.\n\n' \
              'Use "httpc help [command]" for more information about a command.\n')
-        
+
+    # todo:
     # GET
     if parsedLine[1] == "get":
         print("getting: ", end="")
@@ -170,8 +174,25 @@ def run_httpcClient():
             quit()
         httpc_post(parsedStuff, needVerbose, needHeader, needData)
 
+    # Get /
+    if parsedLine[0] == "GET":
+        if parsedLine[1] == "/":
+            print("GET /:")
+            # get_list()
+        elif parsedLine[1] == "/foo":
+            print("GET /foo:")
+            # get_foo()
+        else:
+            print("Wrong input!")
 
-# todo: httpc_get needs to be able to return header
+    if parsedLine[0] == "POST":
+        if parsedLine[1] == "/bar":
+            print("POST /bar:")
+            # post_bar()
+        else:
+            print("Wrong input!")
+
+
 # parses and sends get request w/ provided url (has additional info for verbose)
 
 def httpc_get(urlstuff, needVerbose, needHeader):
@@ -229,6 +250,30 @@ def display(s, needVerbose):
     else:
         print(strRecv.split("\r\n\r", 1)[1])  # Print w/o verbose info
 
+        
+# to read and print a file
+def read(file_dir):
+    try:
+        f = open(file_dir, 'r', encoding="utf-8")
+        print(f.read)
+    except IOError:
+        print("HTTP ERROR 404: File not found.")
+    f.close()
+
+
+# to write new content to a file, a new file will be created at the dir if not exists
+def write(file_dir, new_content):
+    f = open(file_dir, 'a+', encoding="utf-8")
+    f.write(new_content)
+    f = open(file_dir, 'a+', encoding="utf-8")
+    print(f.read)
+    f.close()
+    
+    
+# todo:
+# def get_list():
+# def get_foo():
+# def post_bar():
 
 while True:
     run_httpcClient()

@@ -1,7 +1,6 @@
 import os
 import json
 import threading
-import logging
 
 from matplotlib.font_manager import json_dump
 
@@ -60,7 +59,7 @@ class FileHandler:
         finally:
             FileHandler.tdLock.release()
         self.stat=200
-        self.content= json_dumps("") #convert content to json string
+        self.content= json.dumpsdumps("") #convert content to json string
         
     #----------------helper static methods-----------------------
     #returns list of files in the directory
@@ -79,7 +78,7 @@ class FileHandler:
         if content_type=='application/json':
             out={}
             out[""]=content_list
-            return json_dump(out)
+            return json.dumps(out)
         elif content_type=='text/xml':
             return FileHandler.gen_xml(content_list)
     

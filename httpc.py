@@ -3,7 +3,7 @@ import sys
 from urllib.parse import urlparse
 import httpcHelper
 import re
-from httpFS import FileServer
+#from httpFS import FileServer
 
 
 def run_httpc(userInput):
@@ -12,7 +12,7 @@ def run_httpc(userInput):
     headers = None
     body_content = None
     file_name = None
-    port = 80
+    port = 8080
 
     # command parsing
     # -v

@@ -3,11 +3,15 @@ import threading
 import re
 import json
 from httpFileHandler import FileHandler
+import argparse
+import logging
+import sys
+
 
 class FileServer:
-    def __init__(self, port=8080,dir="."):
-        self.port= port
-        self.directory= dir
+    def __init__(self, port=8080, dir="."):
+        self.port = port
+        self.directory = dir
 
     def run_fileServer(self):
         print("starting custom file server: \n")
@@ -18,167 +22,203 @@ class FileServer:
             print('file server is listening at', self.port)
             while True:
                 (conn, addr) = listener.accept()
-                threading.Thread(target=request_handler, args=(conn, addr, self.directory)).start()
+                threading.Thread(target=self.request_handler, args=(conn, addr, self.directory)).start()
         finally:
             print("Closing server. Thank you!")
             listener.close()
             print("server is now shut down...")
-            
-    #read data content from clients request
-    def rcv_data(self,conn):
-        data= b''
+
+    # read data content from clients request
+    def rcv_data(self, conn):
+        data = b''
         while True:
-            dt= conn.recv(1024)
-            data+=dt
-            if len(dt)<1024:
+            dt = conn.recv(1024)
+            data += dt
+            if len(dt) < 1024:
                 break
         return data
 
     def request_handler(self, conn, addr, dirPath):
         try:
-            data=rcv_data(conn).decode("utf-8")
+            data = self.rcv_data(conn).decode("utf-8")
             print("showing received data: \r\n{0}".format(data))
-            parsedReq= ParsingHttpRequests(data)
-            print("received request is: {0}",format(parsedReq.method))
-            response_Message=self.respGenerator(parsedReq, dirPath)
+            parsedReq = ParsingHttpRequests(data)
+            print("received request is: {0}", format(parsedReq.method))
+            response_Message = self.respGenerator(parsedReq, dirPath)
             print("retrieving response: {0}".format(response_Message))
             conn.send(response_Message)
         finally:
-            conn.close()    
+            conn.close()
             print("disconnecting from the address: {0}".format(addr))
 
     def respGenerator(self, parsedReq, dirPath):
-        fh= FileHandler()
-        
-        if parsedReq.method=="GET":
-            if parsedReq.operation== FileOp.DL:
-                status= 200
-                parsedReq.contentType= "text/html"
-                content= "DL file for testing!"
-                
-            elif parsedReq.operation==FileOp.GetRes:
-                status=200
-                content="{\"args\": \""+parsedReq.getParams +"\"}"
-            
-            elif parsedReq.operation==FileOp.GetFList:
-               fh.getAllFiles(dirPath, parsedReq.contentType)
-               status= fh.stat
-               content= fh.content 
-            
-            elif parsedReq.operation==FileOp.GetFContent:
-                fh.content_GET(dirPath, parsedReq.fileName, parsedReq.contentType)
-                status= fh.stat
-                content= fh.content
-        
-        elif parsedReq.method =="POST":
-            if parsedReq.operation== FileOp.PostRes:
+        fh = FileHandler()
+
+        if parsedReq.method == "GET":
+            if parsedReq.operation == FileOp.DL:
+                status = 200
+                parsedReq.contentType = "text/html"
+                content = "DL file for testing!"
+
+            elif parsedReq.operation == FileOp.GetRes:
+                status = 200
+                content = "{\"args\": \""+parsedReq.getParams + "\"}"
+
+            elif parsedReq.operation == FileOp.GetFList:
+                fh.getAllFiles(dirPath, parsedReq.contentType)
+                status = fh.stat
+                content = fh.content
+
+            elif parsedReq.operation == FileOp.GetFContent:
+                fh.content_GET(dirPath, parsedReq.fileName,
+                               parsedReq.contentType)
+                status = fh.stat
+                content = fh.content
+
+        elif parsedReq.method == "POST":
+            if parsedReq.operation == FileOp.PostRes:
                 print("making post response: \n")
-                status=200
-                content="{\"args\": {}, \"data\": \""+parsedReq.fileContent +"\"}"
+                status = 200
+                content = "{\"args\": {}, \"data\": \"" + \
+                    parsedReq.fileContent + "\"}"
             else:
-                fh.content_POST(dirPath, parsedReq.fileName, parsedReq.fileContent, parsedReq.contentType)
-                status= fh.stat
-                content= fh.content
-                
-        #generating response and encoding        
-        resp_msg= 'HTTP/1.1 ' + str(status) + ' ' + self.status_msg(status) + '\r\n'+'Connection: close\r\n' + 'Content-Length: ' + str(len(content)) + '\r\n'
-        if parsedReq.operation==FileOp.DL:
-            resp_msg+= 'Content-Disposition: attachment; filename="download.txt"\r\n'
-        resp_msg+= 'Content-Type: ' + parsedReq.contentType + '\r\n\r\n' + content
-        
+                fh.content_POST(dirPath, parsedReq.fileName,
+                                parsedReq.fileContent, parsedReq.contentType)
+                status = fh.stat
+                content = fh.content
+
+        # generating response and encoding
+        resp_msg = 'HTTP/1.1 ' + str(status) + ' ' + self.status_msg(status) + '\r\n' + \
+                                     'Connection: close\r\n' + 'Content-Length: ' + \
+                                         str(len(content)) + '\r\n'
+        if parsedReq.operation == FileOp.DL:
+            resp_msg += 'Content-Disposition: attachment; filename="download.txt"\r\n'
+        resp_msg += 'Content-Type: ' + parsedReq.contentType + '\r\n\r\n' + content
+
         return resp_msg.encode("utf-8")
-        
+
     def status_msg(self, status):
-        msg= ''
-        if status==200:
-            msg= 'OK!'
-        if status==301:
-            msg= 'Permanently moved'
-        if status==400:
-            msg= 'Bad Request!'
-        if status==404:
-            msg= 'Not found'
-        if status==505:
-            msg= 'HTTP version not supported'
-        return msg                 
-                
+        msg = ''
+        if status == 200:
+            msg = 'OK!'
+        if status == 301:
+            msg = 'Permanently moved'
+        if status == 400:
+            msg = 'Bad Request!'
+        if status == 404:
+            msg = 'Not found'
+        if status == 505:
+            msg = 'HTTP version not supported'
+        return msg
+
+
 class ParsingHttpRequests:
-    def __init__(self,data):
-        self.contentType="application/json"
-        self.getParams=""
-        
-        (http_header, http_body)= data.split('\r\n\r\n')
-        headerLines= http_header.split('\r\n')
-        (method, resource, version)= headerLines[0].split(' ')
-        
+    def __init__(self, data):
+        self.contentType = "application/json"
+        self.getParams = ""
+
+        (http_header, http_body) = data.split('\r\n\r\n')
+        headerLines = http_header.split('\r\n')
+        (method, resource, version) = headerLines[0].split(' ')
+
         for line in headerLines:
             if("Content-Type" in line):
-                self.contentType= line.split(':')[1]
-            
+                self.contentType = line.split(':')[1]
+
         if(resource.endswith("?")):
-            resource=resource[:-1]
-            
-        #parsing GET    
-        if(method=="GET"):
-            self.method= "GET"
-            
+            resource = resource[:-1]
+
+        # parsing GET
+        if(method == "GET"):
+            self.method = "GET"
+
             if(resource.startswith("/get")):
-                self.operation=FileOp.GetRes
-                if(resource== "/get"):
-                    self.getParams=""
+                self.operation = FileOp.GetRes
+                if(resource == "/get"):
+                    self.getParams = ""
                 else:
-                    l, r= resource.split('?')
-                    out={}
+                    l, r = resource.split('?')
+                    out = {}
                     for kv in r.split('&'):
-                        key, value= kv.split('=')
-                        out[key]=value
-                    self.getParams=json_dumps(out)
-                    
+                        key, value = kv.split('=')
+                        out[key] = value
+                    self.getParams = json_dumps(out)
+
             elif(resource.startswith("/download")):
-                self.operation= FileOp.DL  
+                self.operation = FileOp.DL
             elif(resource.startswith("/")):
-                self.operation= FileOp.GetFList
+                self.operation = FileOp.GetFList
             else:
-                m= re.match(r"/(.+)",resource) #matching regex
+                m = re.match(r"/(.+)", resource)  # matching regex
                 if(m):
-                    self.operation=FileOp.GetFContent
-                    self.fileName= m.group(1)
+                    self.operation = FileOp.GetFContent
+                    self.fileName = m.group(1)
                 else:
-                    self.operation=FileOp.Invalid
-        #parsing POST            
-        elif(method=="POST"):
-            self.method="POST"
-            m= re.match(r"/(.+)",resource)
+                    self.operation = FileOp.Invalid
+        # parsing POST
+        elif(method == "POST"):
+            self.method = "POST"
+            m = re.match(r"/(.+)", resource)
             if(m):
-                self.fileContent= http_body
-                if(m.group(1)=="post"):
-                    self.operation=FileOp.PostRes
+                self.fileContent = http_body
+                if(m.group(1) == "post"):
+                    self.operation = FileOp.PostRes
                 else:
-                    self.operation= FileOp.WriteFContent
-                    self.fileName= m.group(1)
+                    self.operation = FileOp.WriteFContent
+                    self.fileName = m.group(1)
             else:
-                self.operation= FileOp.Invalid
+                self.operation = FileOp.Invalid
         else:
-            self.method="Invalid"
-            
-        self.version= version
-            
-            
-                 
+            self.method = "Invalid"
+
+        self.version = version
+
 
 class FileOp:
-    Invalid=0
-    GetFList=1
-    GetFContent=2
-    WriteFContent=3
-    GetRes=4
-    PostRes=5
-    DL= 6            
-        
-        
-        
-        
+    Invalid = 0
+    GetFList = 1
+    GetFContent = 2
+    WriteFContent = 3
+    GetRes = 4
+    PostRes = 5
+    DL = 6
+
+
 # parser = argparse.ArgumentParser()
 # parser.add_argument("--port", help="file server port", type=int, default=8080)
 # args = parser.parse_args()
 # run_fileServer('', args.port)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", help="output log", action='store_true')
+parser.add_argument("-p", help="server port", type=int, default=8080)
+parser.add_argument("-d", help="data directory", default=".")
+args = parser.parse_args()
+#run_httpc(args.host, args.port)
+
+if(args.v):  # output debug
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+else:
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
+server = FileServer(args.p, args.d)
+server.run_fileServer()
+
+# def handler(self, conn, address, dirPath):
+#     try:
+#         # convert bytes to string
+#         data = self.recvall(conn).decode("utf-8")
+#         logging.debug("Received the data: \r\n{0}".format(data))
+#         parsedReq = ParsingHttpRequests(data)
+#         logging.debug("Received the {0} request.".format(requestParser.method))
+#         # pprint(vars(requestParser))
+#         response_msg = self.RespGenerator(requestParser, dirPath)
+#         logging.debug('Response message: {0}.'.format(response_msg))
+#         conn.send(response_msg)
+#         #conn.send('HTTP/1.1 200 OK\r\n\r\nsomething'.encode("utf-8"))
+#         conn.close()
+#     except IOError as e:
+#         logging.err(e)
+#     finally:
+#         conn.close()
+#         logging.debug("Disconnected from {0}.".format(address))

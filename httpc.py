@@ -170,7 +170,7 @@ FILE SYSTEM:
     httpc get -h Content-Type:application/json 'http://localhost:8080/'
     httpc get -h Content-Type:text/xml 'http://localhost:8080/'
 
-    httpc get -v 'http://localhost:8080/foo'
+    httpc get -v 'http://localhost:8080/foo' #
     httpc get -v -h 'http://localhost:8080/../foo'
     httpc get -h Content-Disposition:inline 'http://localhost:8080/foo'
     httpc get -h Content-Disposition:inline 'http://localhost:8080/filename'

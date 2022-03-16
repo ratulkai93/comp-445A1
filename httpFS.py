@@ -43,7 +43,7 @@ class FileServer:
             data = self.rcv_data(conn).decode("utf-8")
             print("showing received data: \r\n{0}".format(data))
             parsedReq = ParsingHttpRequests(data)
-            print("received request is: {0}", format(parsedReq.method))
+            print("received request is: {0}".format(parsedReq.method))
             response_Message = self.respGenerator(parsedReq, dirPath)
             print("retrieving response: {0}".format(response_Message))
             conn.send(response_Message)
@@ -62,7 +62,7 @@ class FileServer:
 
             elif parsedReq.operation == FileOp.GetRes:
                 status = 200
-                content = "{\"args\": \""+parsedReq.getParams + "\"}"
+                content = "{\"args\": \""+parsedReq.getParams + "\"}"#to fix for output formatting
 
             elif parsedReq.operation == FileOp.GetFList:
                 fh.getAllFiles(dirPath, parsedReq.contentType)

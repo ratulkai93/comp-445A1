@@ -51,7 +51,7 @@ class FileHandler:
         if contType=='application/json':
             parsedJson= json.loads(content)
             for key,value in parsedJson.items():
-                content= v #stored parsed data into content
+                content= value #stored parsed data into content
         FileHandler.tdLock.acquire()
         try:
             with open(url_dir + '/'+ fName, 'w') as f:
@@ -59,7 +59,7 @@ class FileHandler:
         finally:
             FileHandler.tdLock.release()
         self.stat=200
-        self.content= json.dumpsdumps("") #convert content to json string
+        self.content= json.dumps("") #convert content to json string
         
     #----------------helper static methods-----------------------
     #returns list of files in the directory

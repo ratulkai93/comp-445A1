@@ -1,82 +1,36 @@
 import socket
-import sys
 from urllib.parse import urlparse
-import httpcHelper
 import re
-#from httpFS import FileServer
+from MockHttpClient import *
+from UdpController import *
+import logging
+import sys
+import argparse
 
 
-def run_httpc(userInput):
+class Parameter:
     url = None
     verbose = False
     headers = None
-    body_content = None
-    file_name = None
-    port = 8080
+    bodyData = None
+    writeFileName = None
+    port = 80
 
-    # command parsing
-    # -v
-    if "-v" in userInput:
-        verbose = True
-    # -h [key:value]
-    if "-h" in userInput:
-        pairs = re.findall("-h (.+?:.+?) ", userInput)
-        headers = "\r\n".join(pairs)
-    # url
-    urlString = userInput.split(" ")[-1]
-    if "'" in urlString:
-        url = urlString[1:-1]
-    else:
-        url = urlString
-
-    if userInput.startswith("httpc get") or userInput.startswith("httpc post"):
-        o = urlparse(url)
-        host = o.hostname
-        if o.port is None:
-            port = port
-        else:
-            port = o.port
-        while True:
-            # create socket
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((host, port))
-
-                # GET
-                if userInput.startswith("httpc get"):
-                    request = httpcHelper.HttpRequest(host, o.path, o.query, headers)
-                    s.sendall(request.get_info())
-
-                # POST
-                elif userInput.startswith("httpc post"):
-                    # -d
-                    if "-d" in userInput and "-f" not in userInput:
-                        infos = userInput.split(" -d ")[1].split(" ")
-                        body_content = (infos[0] + infos[1])[1:-1]
-                    # -f
-                    if "-f" in userInput and "-d" not in userInput:
-                        readFileName = userInput.split(" -f ")[1].split(" ")[0]
-                        with open(readFileName, 'r') as f:
-                            body_content = f.read()
-                    request = httpcHelper.HttpRequest(host, o.path, body_content, headers)
-                    s.sendall(request.post_info())
-                # print(request.get_info().decode('utf-8'))
-                # print(request.post_info().decode('utf-8'))
-
-                data = recvall(s)
-            response = httpcHelper.HttpResponse(data)
-
-            if response.code == "301":
-                host = response.location
-            else:
-                break
-        display(verbose, response, file_name)
-
-        # Invalid: Either post or get
-    else:
-        print("Invalid command, please try again")
+    @staticmethod
+    def reInit():
+        Parameter.url = None
+        Parameter.verbose = False
+        Parameter.headers = None
+        Parameter.bodyData = None
+        Parameter.writeFileName = None
 
 
-# display the data from socket, includes verbose info if needed
+def writeFile(fileName, content):
+    with open(fileName, 'w') as f:
+        f.write(content)
+    print("Write reponse to the file: " + fileName)
+
+
 def display(verbose, response, file_name):
     if verbose:
         print(response.text)
@@ -114,29 +68,122 @@ def showHelp(command):
               'Use "httpc help [command]" for more information about a command.\n')
 
 
-# receive all
+def run_httpc(command):
+    # command parsing
+    # -v
+    if "-v" in command:
+        Parameter.verbose = True
+    # -h [key:value]
+    if "-h" in command:
+        Parameter.headers = getHeaders(command)
+    if "-o" in command:
+        Parameter.writeFileName = command.split(" -o ")[1]
+        command = command.split(" -o ")[0]
+
+    urlString = command.split(" ")[-1]
+    if "'" in urlString:
+        Parameter.url = urlString[1:-1]
+    else:
+        Parameter.url = urlString
+
+    # Get Usage: httpc get [-v] [-h key:value] URL
+    # Post Usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL
+    if command.startswith("get") or command.startswith("post"):
+        o = urlparse(Parameter.url)
+        host = o.hostname
+        if o.port is None:
+            port = Parameter.port
+        else:
+            port = o.port
+        while True:
+            udpClient = UdpController()
+            udpClient.connectServer()
+            if command.startswith("post"):
+                if "-d" in command and "-f" not in command:
+                    infos = command.split(" -d ")[1].split(" ")
+                    Parameter.bodyData = (infos[0] + infos[1])[1:-1]
+                if "-f" in command and "-d" not in command:
+                    readFileName = command.split(" -f ")[1].split(" ")[0]
+                    with open(readFileName, 'r') as f:
+                        Parameter.bodyData = f.read()
+                request = HttpRequest(host, o.path, Parameter.bodyData, Parameter.headers)
+                # print(request.getPost().decode('utf-8'))
+                logging.debug("Client sent request: {}".format(request.getPost()))
+                udpClient.sendMessage(request.getPost())
+
+            else:
+                request = HttpRequest(host, o.path, o.query, Parameter.headers)
+                logging.debug("Client sent request: {}".format(request.getGet()))
+                udpClient.sendMessage(request.getGet())
+            data = udpClient.receiveMessage()
+            if data is None:
+                logging.debug("Client did not receive response.")
+                sys.exit(0)
+            logging.debug("Client received response: {}".format(data.decode('utf-8')))
+
+            response = HttpResponse(data)
+            if response.code == HttpCode.redirect:
+                host = response.location
+            else:
+                break
+
+        udpClient.dis_connect()
+
+        if Parameter.verbose:
+            print(response.text)
+            if Parameter.writeFileName is not None:
+                writeFile(Parameter.writeFileName, response.text)
+        else:
+            print(response.body)
+            if Parameter.writeFileName is not None:
+                writeFile(Parameter.writeFileName, response.text)
+
+    # If invalid
+    else:
+        print("Invalid command.")
+
+
+def getHeaders(command):
+    pairs = re.findall("-h (.+?:.+?) ", command)
+    return "\r\n".join(pairs)
+    # return command.split(" -h ")[1].split(" ")[0]
+
+
 def recvall(sock):
-    BUFF_SIZE = 1024
+    BUFF_SIZE = 1024  # 1 KiB
     data = b''
     while True:
         part = sock.recv(BUFF_SIZE)
         data += part
         if len(part) < BUFF_SIZE:
+            # either 0 or end of data
             break
     return data
 
 
-# Program starts:
+# program entrance
+# parse the input parameters
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", help="output log", action='store_true')
+args = parser.parse_args()
+
+# whether output debug
+if (args.v):
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+else:
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
 while True:
-    user_Input = input("\nplease enter your request, or: "
-                     "enter \"help\" for instructions, "
-                     "enter \"quit\" to exit the program\n")
+    user_input = input("\nplease enter your request, or: "
+                       "enter \"help\" for instructions, "
+                       "enter \"quit\" to exit the program\n")
     try:
-        if "help" in user_Input:
-            showHelp(user_Input)
-        if "quit" in user_Input:
+        if "help" in user_input:
+            showHelp(user_input)
+        if "quit" in user_input:
             sys.exit(0)
-        run_httpc(user_Input)
+        Parameter.reInit()
+        run_httpc(user_input)
     except AttributeError:
         print("Invalid command, please check your option arguments")
     except FileNotFoundError:
@@ -144,36 +191,3 @@ while True:
     except:
         print("Invalid command")
     print("------------------------request ends------------------------")
-
-'''
-Test cases:
-    
-GET:
-    httpc get http://httpbin.org/get?course=networking&assignment=1
-    httpc get -v http://httpbin.org/get?course=networking&assignment=1
-    httpc get -h Content-Type:text/html http://httpbin.org/get?course=networking&assignment=1
-    httpc get -v -h Content-Type:text/html http://httpbin.org/get?course=networking&assignment=1
-    
-POST:
-    httpc post -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
-    httpc post -h Content-Type:application/json -f valid.txt http://httpbin.org/post
-    httpc post -v -h Content-Type:application/json -d {"Assignment":1} http://httpbin.org/post
-    httpc post -v -h Content-Type:application/json -f valid.txt http://httpbin.org/post
-
-    httpc post -h http://httpbin.org/post
-    httpc post -v http://httpbin.org/post
-    httpc post -h Content-Type:application/json -f non-valid.txt http://httpbin.org/post
-    
-FILE SYSTEM:
-    httpc get 'http://localhost:8080/'
-    httpc get -v 'http://localhost:8080/'
-    httpc get -h Content-Type:application/json 'http://localhost:8080/'
-    httpc get -h Content-Type:text/xml 'http://localhost:8080/'
-
-    httpc get -v 'http://localhost:8080/foo' #
-    httpc get -v -h 'http://localhost:8080/../foo'
-    httpc get -h Content-Disposition:inline 'http://localhost:8080/foo'
-    httpc get -h Content-Disposition:inline 'http://localhost:8080/filename'
-    httpc post -h Content-Type:application/json -d '{"": "helloworld"}' http://localhost:8080/foo
-    httpc post -h Content-Type:text/txt -d 'helloworld' http://localhost:8080/foo.txt
-'''

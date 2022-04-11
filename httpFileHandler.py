@@ -2,8 +2,6 @@ import os
 import json
 import threading
 
-from matplotlib.font_manager import json_dump
-
 class FileHandler:
     tdLock= threading.Lock() #to prevent race conditions
     
@@ -27,7 +25,7 @@ class FileHandler:
             out['warning']=400
             out['message']='Bad request!'
             self.stat=400
-            self.content= json_dump(out)
+            self.content= json.dumps(out)
         else:
             files= FileHandler.fileList_dir(url_dir)
             #wrong case 2
@@ -36,7 +34,7 @@ class FileHandler:
                 out['warning']=404
                 out['message']='Not found!'
                 self.stat=404
-                self.content= json_dump(out) 
+                self.content= json.dumps(out) 
             else:
                 FileHandler.tdLock.acquire()
                 try:

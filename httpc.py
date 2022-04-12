@@ -1,8 +1,8 @@
 import socket
 from urllib.parse import urlparse
 import re
-from MockHttpClient import *
-from UdpController import *
+#from MockHttpClient import *
+from UDPctrlr import *
 import logging
 import sys
 import argparse

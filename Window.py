@@ -36,9 +36,7 @@ class Window:
         pass
 
     def getFrames(self):
-        """
-        Get all sendable packets in WINDOW
-        """
+        #Get all sendable packets in WINDOW
         frameList = []
         for i in range(self.pointer, self.pointer + WINDOW_SIZE):
             if i >= len(self.frames):
@@ -49,9 +47,7 @@ class Window:
         return frameList
 
     def updateWindow(self, seq_num):
-        """
-        When received an ACK, update WINDOW, slide WINDOW if necessary
-        """
+        #When received an ACK, update WINDOW, slide WINDOW if necessary
         self.frames[seq_num - 1].ACK = True
         offset = 0
         for i in range(self.pointer, self.pointer + WINDOW_SIZE):
@@ -64,9 +60,7 @@ class Window:
         self.pointer += offset
 
     def hasPendingPacket(self):
-        """
-        Check whether all packets have been ACKed
-        """
+        #Check whether all packets have been ACKed
         for i in range(0, self.numberOfFrames):
             if not self.frames[i].ACK:
                 return True

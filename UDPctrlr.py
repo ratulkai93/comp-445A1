@@ -1,5 +1,4 @@
 from ipaddress import ip_address
-from operator import truediv
 import time
 import socket
 from tkinter import W

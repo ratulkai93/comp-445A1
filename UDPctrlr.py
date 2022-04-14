@@ -12,6 +12,9 @@ SERVER_PORT = 8007
 ROUTER_IP = "localhost"
 ROUTER_PORT = 3000
 ALIVE= 10
+TIME_OUT=2
+WINDOW_SIZE=5
+TIME_OUT_FOR_RECEIVE = 30
 
 class Packetbuilder:
     __destAddr=None
@@ -164,5 +167,6 @@ class UDPctrlr:
      
     def dis_connect(self):
         #Disconnecting: FIN, ACK, FIN, ACK
-        logging.info("Disconnecting.")
+        #logging.info("Disconnecting.")
+        print("Disconnecting server. Thank you!")
         self.__conn.close()    

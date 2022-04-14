@@ -9,14 +9,7 @@ from httpFS import *
 from httpFileHandler import FileHandler
 from UDPctrlr import *
 
-# class Operation: 
-#     Invalid=0
-#     GetFL=1
-#     GetFC=2
-#     WriteFC=3
-#     GetRs=4
-#     PostRs=5
-#     Dl=6
+
 class MockServer:
     BUFFER_SIZE= 1024
     
@@ -70,8 +63,8 @@ class MockServer:
             phrase = 'HTTP Version Not Supported'
         
         return phrase
-    
-    def genResponse(self, requestParser, pathDir):
+    #for generating response
+    def genResponse(self, requestParser, dirPath):
         fileapp= FileHandler()
         if requestParser.method =="GET":
             if requestParser.operation == FileOp.Dl:
@@ -91,7 +84,8 @@ class MockServer:
                 content = fileapp.content		
         elif requestParser.method == "POST":
             if requestParser.operation == FileOp.PostRes:
-                logging.debug("Regular post.")
+                #logging.debug("Regular post.")
+                print("POST: \n")
                 status = 200
                 content = "{\"args\": {},\"data\": \"" + requestParser.fileContent + "\"}"
             else:
@@ -101,7 +95,7 @@ class MockServer:
         # response
         response_msg = 'HTTP/1.1 ' + str(status) + ' ' + self.status_phrase(status) + '\r\n'
         response_msg = response_msg + 'Connection: close\r\n' + 'Content-Length: ' + str(len(content)) + '\r\n'
-        if requestParser.operation == Operation.Download:
+        if requestParser.operation == FileOp.DL:
             response_msg = response_msg + 'Content-Disposition: attachment; filename="download.txt"\r\n'
         response_msg = response_msg + 'Content-Type: ' + requestParser.contentType + '\r\n\r\n'
         response_msg = response_msg + content

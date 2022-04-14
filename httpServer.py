@@ -5,10 +5,18 @@ import logging
 import re
 from urllib.parse import urlparse
 from pprint import pprint
-from httpFS import ParsingHttpRequests
+from httpFS import *
 from httpFileHandler import FileHandler
 from UDPctrlr import *
 
+# class Operation: 
+#     Invalid=0
+#     GetFL=1
+#     GetFC=2
+#     WriteFC=3
+#     GetRs=4
+#     PostRs=5
+#     Dl=6
 class MockServer:
     BUFFER_SIZE= 1024
     
@@ -64,25 +72,25 @@ class MockServer:
         return phrase
     
     def genResponse(self, requestParser, pathDir):
-        fileMng= FileHandler()
+        fileapp= FileHandler()
         if requestParser.method =="GET":
-            if requestParser.operation == Operation.Download:
+            if requestParser.operation == FileOp.Dl:
                 status = 200
                 requestParser.contentType = "text/html"
                 content = "this is a download file for testig purpose."     
-            elif requestParser.operation == Operation.GetResource:
+            elif requestParser.operation == FileOp.GetRes:
                 status = 200
                 content = "{\"args\": \"" + requestParser.getParameter +"\"}"
-            elif requestParser.operation == Operation.GetFileList:
+            elif requestParser.operation == FileOp.GetFList:
                 fileapp.get_all_files(dirPath, requestParser.contentType)
                 status = fileapp.status
                 content = fileapp.content
-            elif requestParser.operation == Operation.GetFileContent:
+            elif requestParser.operation == FileOp.GetFContent:
                 fileapp.get_content(dirPath, requestParser.fileName, requestParser.contentType)
                 status = fileapp.status
-                ontent = fileapp.content		
-        elif requestParser.method == HttpMethod.Post:
-            if requestParser.operation == Operation.PostResource:
+                content = fileapp.content		
+        elif requestParser.method == "POST":
+            if requestParser.operation == FileOp.PostRes:
                 logging.debug("Regular post.")
                 status = 200
                 content = "{\"args\": {},\"data\": \"" + requestParser.fileContent + "\"}"

@@ -68,7 +68,7 @@ class Window:
 
     def finished(self):
         # check payload ###total number###
-        # if is last one, update fini
+        # if is last one, update finished
         if self.frames:
             f = self.frames[-1]
             if f.is_last:
